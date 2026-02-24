@@ -1,310 +1,345 @@
-import React, { useState } from 'react';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  ComposedChart, Line, Legend, Cell, PieChart, Pie
-} from 'recharts';
-import { 
-  Trophy, BookOpen, Users, TrendingUp, Medal, Award, 
-  ChevronRight, Activity, Target
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel de Performance SESI</title>
+  
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- React, ReactDOM e Babel via CDN -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- Dependência para o Recharts rodar sem erros no UMD -->
+  <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
 
-// Dados extraídos da imagem
-const rawData = [
-  { name: 'SESI Luziânia', estudantes: 593, livros: 623, pontos: 10.51, p100: 1.770, nivel: 'Nível 2 - Lugar', rank: 1, ativo: true },
-  { name: 'SESI Jundiaí', estudantes: 858, livros: 196, pontos: 8.58, p100: 1.000, nivel: 'Nível 3 - Seleção', rank: 2, ativo: true },
-  { name: 'SESI Mineiros', estudantes: 440, livros: 296, pontos: 6.73, p100: 1.530, nivel: 'Nível 2 - Lugar', rank: 3, ativo: true },
-  { name: 'SESI Aparecida', estudantes: 365, livros: 275, pontos: 0.75, p100: 0.210, nivel: 'Nível 1 - Item', rank: 4, ativo: true },
-  { name: 'SESI Dr. Celso Charuri', estudantes: 231, livros: 115, pontos: 0.50, p100: 0.220, nivel: 'Nível 1 - Item', rank: 5, ativo: true },
-  { name: 'SESI Itumbiara', estudantes: 714, livros: 332, pontos: 0.46, p100: 0.060, nivel: 'Nível 1 - Item', rank: 6, ativo: true },
-  { name: 'SESI Campinas', estudantes: 601, livros: 141, pontos: 0.23, p100: 0.040, nivel: 'Nível 1 - Item', rank: 7, ativo: true },
-  { name: 'SESI Crixás', estudantes: 584, livros: 95, pontos: 0.16, p100: 0.030, nivel: 'Nível 1 - Item', rank: 8, ativo: true },
-  { name: 'SESI Niquelândia', estudantes: 237, livros: 26, pontos: 0.11, p100: 0.050, nivel: 'Nível 1 - Item', rank: 9, ativo: true },
-  { name: 'SESI Jardim Colorado', estudantes: 772, livros: 80, pontos: 0.10, p100: 0.010, nivel: 'Nível 1 - Item', rank: 10, ativo: true },
-  { name: 'SESI Vila Canaã', estudantes: 1465, livros: 76, pontos: 0.05, p100: 0.000, nivel: 'Nível 1 - Item', rank: 11, ativo: true },
-  { name: 'SESI Rio Verde', estudantes: 640, livros: 0, pontos: 0.00, p100: 0.000, nivel: 'Sem dados', rank: '-', ativo: false },
-  { name: 'SESI Planalto', estudantes: 1615, livros: 0, pontos: 0.00, p100: 0.000, nivel: 'Sem dados', rank: '-', ativo: false },
-  { name: 'SESI Goianésia', estudantes: 300, livros: 0, pontos: 0.00, p100: 0.000, nivel: 'Sem dados', rank: '-', ativo: false },
-  { name: 'SESI Catalão', estudantes: 687, livros: 0, pontos: 0.00, p100: 0.000, nivel: 'Sem dados', rank: '-', ativo: false },
-  { name: 'SESI Jaiara', estudantes: 744, livros: 0, pontos: 0.00, p100: 0.000, nivel: 'Sem dados', rank: '-', ativo: false },
-  { name: 'SESI Minaçu', estudantes: 298, livros: 0, pontos: 0.00, p100: 0.000, nivel: 'Sem dados', rank: '-', ativo: false },
-];
+  <!-- Recharts via CDN (Versão fixada para evitar erro de 'ForwardRef' e 'BarChart' indefinido) -->
+  <script src="https://unpkg.com/recharts@2.1.9/umd/Recharts.js" crossorigin></script>
 
-const activeSchools = rawData.filter(d => d.ativo).sort((a, b) => a.rank - b.rank);
-const top3 = activeSchools.slice(0, 3);
+  <style>
+    /* Suavização de fontes global */
+    body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
 
-// Cores para os gráficos e níveis
-const COLORS = {
-  primary: '#0ea5e9', // Sky blue
-  secondary: '#10b981', // Emerald
-  tertiary: '#f59e0b', // Amber
-  text: '#0f172a',
-  bg: '#ffffff'
-};
+  <script type="text/babel">
+    const { useState } = React;
+    const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Line, Legend, Cell } = window.Recharts;
 
-const getNivelColor = (nivel) => {
-  if (nivel.includes('Nível 3')) return 'bg-blue-100 text-blue-800 border-blue-200';
-  if (nivel.includes('Nível 2')) return 'bg-emerald-100 text-emerald-800 border-emerald-200';
-  if (nivel.includes('Nível 1')) return 'bg-amber-100 text-amber-800 border-amber-200';
-  return 'bg-slate-100 text-slate-500 border-slate-200';
-};
+    // ==========================================
+    // ÍCONES SVG EMBUTIDOS (Evita erros de carregamento externo no GitHub Pages)
+    // ==========================================
+    const Target = ({size=24, className=""}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>;
+    const BookOpen = ({size=24, className=""}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>;
+    const Activity = ({size=24, className=""}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>;
+    const Trophy = ({size=24, className=""}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>;
+    const Users = ({size=24, className=""}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
+    const Medal = ({size=24, className=""}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15"/><path d="M11 12 5.12 2.2"/><path d="m13 12 5.88-9.8"/><path d="M8 7h8"/><circle cx="12" cy="17" r="5"/><polyline points="12 18 10.9 15.4 8 15.1 10.3 13.3 9.5 10.5 12 12.1 14.5 10.5 13.7 13.3 16 15.1 13.1 15.4 12 18"/></svg>;
+    const TrendingUp = ({size=24, className=""}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>;
+    const Award = ({size=24, className=""}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>;
 
-const formatBR = (num) => num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    // ==========================================
+    // DADOS E REGRAS DE NEGÓCIO
+    // ==========================================
+    const rawData = [
+      { name: 'SESI Luziânia', estudantes: 593, livros: 623, pontos: 10.51, p100: 1.770, nivel: 'Nível 2 - Lugar', rank: 1, ativo: true },
+      { name: 'SESI Jundiaí', estudantes: 858, livros: 196, pontos: 8.58, p100: 1.000, nivel: 'Nível 3 - Seleção', rank: 2, ativo: true },
+      { name: 'SESI Mineiros', estudantes: 440, livros: 296, pontos: 6.73, p100: 1.530, nivel: 'Nível 2 - Lugar', rank: 3, ativo: true },
+      { name: 'SESI Aparecida', estudantes: 365, livros: 275, pontos: 0.75, p100: 0.210, nivel: 'Nível 1 - Item', rank: 4, ativo: true },
+      { name: 'SESI Dr. Celso Charuri', estudantes: 231, livros: 115, pontos: 0.50, p100: 0.220, nivel: 'Nível 1 - Item', rank: 5, ativo: true },
+      { name: 'SESI Itumbiara', estudantes: 714, livros: 332, pontos: 0.46, p100: 0.060, nivel: 'Nível 1 - Item', rank: 6, ativo: true },
+      { name: 'SESI Campinas', estudantes: 601, livros: 141, pontos: 0.23, p100: 0.040, nivel: 'Nível 1 - Item', rank: 7, ativo: true },
+      { name: 'SESI Crixás', estudantes: 584, livros: 95, pontos: 0.16, p100: 0.030, nivel: 'Nível 1 - Item', rank: 8, ativo: true },
+      { name: 'SESI Niquelândia', estudantes: 237, livros: 26, pontos: 0.11, p100: 0.050, nivel: 'Nível 1 - Item', rank: 9, ativo: true },
+      { name: 'SESI Jardim Colorado', estudantes: 772, livros: 80, pontos: 0.10, p100: 0.010, nivel: 'Nível 1 - Item', rank: 10, ativo: true },
+      { name: 'SESI Vila Canaã', estudantes: 1465, livros: 76, pontos: 0.05, p100: 0.000, nivel: 'Nível 1 - Item', rank: 11, ativo: true },
+      { name: 'SESI Rio Verde', estudantes: 640, livros: 0, pontos: 0.00, p100: 0.000, nivel: 'Sem dados', rank: '-', ativo: false },
+      { name: 'SESI Planalto', estudantes: 1615, livros: 0, pontos: 0.00, p100: 0.000, nivel: 'Sem dados', rank: '-', ativo: false },
+      { name: 'SESI Goianésia', estudantes: 300, livros: 0, pontos: 0.00, p100: 0.000, nivel: 'Sem dados', rank: '-', ativo: false },
+      { name: 'SESI Catalão', estudantes: 687, livros: 0, pontos: 0.00, p100: 0.000, nivel: 'Sem dados', rank: '-', ativo: false },
+      { name: 'SESI Jaiara', estudantes: 744, livros: 0, pontos: 0.00, p100: 0.000, nivel: 'Sem dados', rank: '-', ativo: false },
+      { name: 'SESI Minaçu', estudantes: 298, livros: 0, pontos: 0.00, p100: 0.000, nivel: 'Sem dados', rank: '-', ativo: false },
+    ];
 
-const StatCard = ({ title, value, subtitle, icon: Icon, colorClass }) => (
-  <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex items-start gap-4 transition-all hover:shadow-md">
-    <div className={`p-4 rounded-xl ${colorClass}`}>
-      <Icon size={28} />
-    </div>
-    <div>
-      <p className="text-sm font-semibold text-slate-500 tracking-wider uppercase">{title}</p>
-      <h3 className="text-3xl font-bold text-slate-900 mt-1">{value}</h3>
-      {subtitle && <p className="text-sm text-slate-500 mt-1">{subtitle}</p>}
-    </div>
-  </div>
-);
+    const activeSchools = rawData.filter(d => d.ativo).sort((a, b) => a.rank - b.rank);
+    const top3 = activeSchools.slice(0, 3);
 
-export default function DashboardSESI() {
-  const totalLivros = activeSchools.reduce((acc, curr) => acc + curr.livros, 0);
-  const totalPontos = activeSchools.reduce((acc, curr) => acc + curr.pontos, 0);
+    const getNivelColor = (nivel) => {
+      if (nivel.includes('Nível 3')) return 'bg-blue-100 text-blue-800 border-blue-200';
+      if (nivel.includes('Nível 2')) return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+      if (nivel.includes('Nível 1')) return 'bg-amber-100 text-amber-800 border-amber-200';
+      return 'bg-slate-100 text-slate-500 border-slate-200';
+    };
 
-  return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans p-4 md:p-8">
-      
-      {/* HEADER COMPACTO E MODERNO */}
-      <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+    const formatPontos = (num) => num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const formatP100 = (num) => num.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+
+    // ==========================================
+    // COMPONENTES
+    // ==========================================
+    const StatCard = ({ title, value, subtitle, icon: Icon, colorClass }) => (
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex items-start gap-4 transition-all hover:shadow-md">
+        <div className={`p-4 rounded-xl ${colorClass}`}>
+          <Icon size={28} />
+        </div>
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-sm font-medium mb-4">
-            <Target size={16} /> Relatório de Engajamento
-          </div>
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900">
-            Performance de <span className="text-blue-600">Leitura</span>
-          </h1>
-          <p className="text-slate-500 mt-2 text-lg">Ranking das unidades SESI baseado em empréstimos e atividades.</p>
+          <p className="text-sm font-semibold text-slate-500 tracking-wider uppercase">{title}</p>
+          <h3 className="text-3xl font-bold text-slate-900 mt-1">{value}</h3>
+          {subtitle && <p className="text-sm text-slate-500 mt-1">{subtitle}</p>}
         </div>
-        
-        <div className="flex gap-4">
-          <div className="bg-white px-6 py-3 rounded-xl shadow-sm border border-slate-200 text-center">
-            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Mês Referência</p>
-            <p className="text-xl font-bold text-slate-800">Fev / 2026</p>
-          </div>
-        </div>
-      </header>
-
-      {/* KPIs PRINCIPAIS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        <StatCard 
-          title="Total de Livros" 
-          value={totalLivros.toLocaleString('pt-BR')} 
-          subtitle="Empréstimos no período"
-          icon={BookOpen} 
-          colorClass="bg-blue-100 text-blue-600" 
-        />
-        <StatCard 
-          title="Pontuação Total" 
-          value={formatBR(totalPontos)} 
-          subtitle="Soma de todas as unidades"
-          icon={Activity} 
-          colorClass="bg-emerald-100 text-emerald-600" 
-        />
-        <StatCard 
-          title="Escola Destaque" 
-          value="Luziânia" 
-          subtitle="1º Lugar no Ranking Geral"
-          icon={Trophy} 
-          colorClass="bg-amber-100 text-amber-600" 
-        />
-        <StatCard 
-          title="Unidades Ativas" 
-          value="11 / 17" 
-          subtitle="6 unidades sem dados"
-          icon={Users} 
-          colorClass="bg-purple-100 text-purple-600" 
-        />
       </div>
+    );
 
-      {/* SESSÃO DO PÓDIO (INFOGRÁFICO) */}
-      <div className="mb-12">
-        <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-          <Medal className="text-amber-500" /> Top 3 Destaques do Mês
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+    function DashboardSESI() {
+      const totalLivros = activeSchools.reduce((acc, curr) => acc + curr.livros, 0);
+      const totalPontos = activeSchools.reduce((acc, curr) => acc + curr.pontos, 0);
+
+      return (
+        <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans p-4 md:p-8">
           
-          {/* 2º LUGAR */}
-          <div className="bg-white rounded-t-3xl rounded-b-xl p-6 border-t-4 border-slate-300 shadow-md relative order-2 md:order-1 transform md:translate-y-4">
-            <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-slate-200 text-slate-600 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg border-4 border-white">2</div>
-            <div className="text-center mt-4">
-              <h3 className="text-xl font-bold text-slate-800">{top3[1].name}</h3>
-              <span className="inline-block mt-2 px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full">{top3[1].nivel}</span>
-            </div>
-            <div className="mt-6 space-y-3">
-              <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                <span className="text-slate-500 text-sm">Pontos</span>
-                <span className="font-bold text-slate-800">{formatBR(top3[1].pontos)}</span>
+          <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-sm font-medium mb-4">
+                <Target size={16} /> Relatório de Engajamento
               </div>
-              <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                <span className="text-slate-500 text-sm">Livros</span>
-                <span className="font-bold text-slate-800">{top3[1].livros}</span>
+              <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900">
+                Performance de <span className="text-blue-600">Leitura</span>
+              </h1>
+              <p className="text-slate-500 mt-2 text-lg">Ranking das unidades SESI baseado em empréstimos e atividades.</p>
+            </div>
+            
+            <div className="flex gap-4">
+              <div className="bg-white px-6 py-3 rounded-xl shadow-sm border border-slate-200 text-center">
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Mês Referência</p>
+                <p className="text-xl font-bold text-slate-800">Fev / 2026</p>
+              </div>
+            </div>
+          </header>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            <StatCard 
+              title="Total de Livros" 
+              value={totalLivros.toLocaleString('pt-BR')} 
+              subtitle="Empréstimos no período"
+              icon={BookOpen} 
+              colorClass="bg-blue-100 text-blue-600" 
+            />
+            <StatCard 
+              title="Pontuação Total" 
+              value={formatPontos(totalPontos)} 
+              subtitle="Soma de todas as unidades"
+              icon={Activity} 
+              colorClass="bg-emerald-100 text-emerald-600" 
+            />
+            <StatCard 
+              title="Escola Destaque" 
+              value="Luziânia" 
+              subtitle="1º Lugar no Ranking Geral"
+              icon={Trophy} 
+              colorClass="bg-amber-100 text-amber-600" 
+            />
+            <StatCard 
+              title="Unidades Ativas" 
+              value="11 / 17" 
+              subtitle="6 unidades sem dados"
+              icon={Users} 
+              colorClass="bg-purple-100 text-purple-600" 
+            />
+          </div>
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+              <Medal className="text-amber-500" /> Top 3 Destaques do Mês
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+              
+              {/* 2º LUGAR */}
+              <div className="bg-white rounded-t-3xl rounded-b-xl p-6 border-t-4 border-slate-300 shadow-md relative order-2 md:order-1 transform md:translate-y-4">
+                <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-slate-200 text-slate-600 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg border-4 border-white">2</div>
+                <div className="text-center mt-4">
+                  <h3 className="text-xl font-bold text-slate-800">{top3[1].name}</h3>
+                  <span className="inline-block mt-2 px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full">{top3[1].nivel}</span>
+                </div>
+                <div className="mt-6 space-y-3">
+                  <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <span className="text-slate-500 text-sm">Pontos</span>
+                    <span className="font-bold text-slate-800">{formatPontos(top3[1].pontos)}</span>
+                  </div>
+                  <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <span className="text-slate-500 text-sm">Livros</span>
+                    <span className="font-bold text-slate-800">{top3[1].livros}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 1º LUGAR */}
+              <div className="bg-gradient-to-b from-amber-50 to-white rounded-t-3xl rounded-b-xl p-8 border-t-4 border-amber-400 shadow-xl relative order-1 md:order-2 z-10">
+                <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-amber-400 text-white w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl border-4 border-white shadow-sm">
+                  <Trophy size={20} />
+                </div>
+                <div className="text-center mt-4">
+                  <p className="text-amber-600 font-bold text-sm tracking-widest uppercase mb-1">Campeão</p>
+                  <h3 className="text-2xl font-black text-slate-900">{top3[0].name}</h3>
+                  <span className="inline-block mt-2 px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full">{top3[0].nivel}</span>
+                </div>
+                 <div className="mt-8 bg-white/60 rounded-xl p-4 space-y-3 border border-amber-100">
+                  <div className="flex justify-between items-center border-b border-amber-100/50 pb-2">
+                    <span className="text-slate-600 text-sm font-medium">Pontuação Total</span>
+                    <span className="font-black text-amber-600 text-lg">{formatPontos(top3[0].pontos)}</span>
+                  </div>
+                  <div className="flex justify-between items-center border-b border-amber-100/50 pb-2">
+                    <span className="text-slate-600 text-sm font-medium">Livros Emprestados</span>
+                    <span className="font-bold text-slate-800">{top3[0].livros}</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-1">
+                    <span className="text-slate-600 text-sm font-medium">Pts / 100 alunos</span>
+                    <span className="font-bold text-slate-800">{formatP100(top3[0].p100)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3º LUGAR */}
+              <div className="bg-white rounded-t-3xl rounded-b-xl p-6 border-t-4 border-amber-700/50 shadow-md relative order-3 md:order-3 transform md:translate-y-8">
+                <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-amber-700/20 text-amber-800 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg border-4 border-white">3</div>
+                <div className="text-center mt-4">
+                  <h3 className="text-xl font-bold text-slate-800">{top3[2].name}</h3>
+                  <span className="inline-block mt-2 px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full">{top3[2].nivel}</span>
+                </div>
+                <div className="mt-6 space-y-3">
+                  <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <span className="text-slate-500 text-sm">Pontos</span>
+                    <span className="font-bold text-slate-800">{formatPontos(top3[2].pontos)}</span>
+                  </div>
+                  <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <span className="text-slate-500 text-sm">Livros</span>
+                    <span className="font-bold text-slate-800">{top3[2].livros}</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+              <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                <TrendingUp size={20} className="text-blue-500"/> Pontos e Empréstimos por Unidade
+              </h3>
+              <div className="h-80 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={activeSchools.slice(0, 8)} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} angle={-45} textAnchor="end" height={80} />
+                    <YAxis yAxisId="left" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
+                    <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                      formatter={(value, name) => [name === 'pontos' ? formatPontos(value) : value, name === 'pontos' ? 'Pontuação' : 'Livros']}
+                    />
+                    <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }} />
+                    <Bar yAxisId="right" dataKey="livros" name="Livros Emprestados" fill="#e2e8f0" radius={[4, 4, 0, 0]} barSize={30} />
+                    <Line yAxisId="left" type="monotone" dataKey="pontos" name="Pontuação Final" stroke="#0ea5e9" strokeWidth={3} dot={{ r: 6, fill: '#0ea5e9', stroke: '#fff', strokeWidth: 2 }} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+              <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                <Award size={20} className="text-emerald-500"/> Eficiência: Pontos / 100 Estudantes
+              </h3>
+              <div className="h-80 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={activeSchools.slice(0, 6)} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
+                    <XAxis type="number" hide />
+                    <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 500 }} width={100} />
+                    <Tooltip 
+                      cursor={{ fill: '#f8fafc' }}
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                      formatter={(value) => [formatP100(value), 'Pts/100 Alunos']}
+                    />
+                    <Bar dataKey="p100" radius={[0, 4, 4, 0]} barSize={24}>
+                      {activeSchools.slice(0, 6).map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={index === 0 ? '#10b981' : index === 1 ? '#0ea5e9' : '#94a3b8'} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </div>
           </div>
 
-          {/* 1º LUGAR */}
-          <div className="bg-gradient-to-b from-amber-50 to-white rounded-t-3xl rounded-b-xl p-8 border-t-4 border-amber-400 shadow-xl relative order-1 md:order-2 z-10">
-            <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-amber-400 text-white w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl border-4 border-white shadow-sm">
-              <Trophy size={20} />
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+              <h3 className="text-lg font-bold text-slate-800">Ranking Completo e Detalhamento</h3>
+              <span className="text-sm font-medium text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-200 shadow-sm">
+                {rawData.length} Unidades Cadastradas
+              </span>
             </div>
-            <div className="text-center mt-4">
-              <p className="text-amber-600 font-bold text-sm tracking-widest uppercase mb-1">Campeão</p>
-              <h3 className="text-2xl font-black text-slate-900">{top3[0].name}</h3>
-              <span className="inline-block mt-2 px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full">{top3[0].nivel}</span>
-            </div>
-             <div className="mt-8 bg-white/60 rounded-xl p-4 space-y-3 border border-amber-100">
-              <div className="flex justify-between items-center border-b border-amber-100/50 pb-2">
-                <span className="text-slate-600 text-sm font-medium">Pontuação Total</span>
-                <span className="font-black text-amber-600 text-lg">{formatBR(top3[0].pontos)}</span>
-              </div>
-              <div className="flex justify-between items-center border-b border-amber-100/50 pb-2">
-                <span className="text-slate-600 text-sm font-medium">Livros Emprestados</span>
-                <span className="font-bold text-slate-800">{top3[0].livros}</span>
-              </div>
-              <div className="flex justify-between items-center pt-1">
-                <span className="text-slate-600 text-sm font-medium">Pts / 100 alunos</span>
-                <span className="font-bold text-slate-800">{formatBR(top3[0].p100)}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* 3º LUGAR */}
-          <div className="bg-white rounded-t-3xl rounded-b-xl p-6 border-t-4 border-amber-700/50 shadow-md relative order-3 md:order-3 transform md:translate-y-8">
-            <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-amber-700/20 text-amber-800 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg border-4 border-white">3</div>
-            <div className="text-center mt-4">
-              <h3 className="text-xl font-bold text-slate-800">{top3[2].name}</h3>
-              <span className="inline-block mt-2 px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full">{top3[2].nivel}</span>
-            </div>
-            <div className="mt-6 space-y-3">
-              <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                <span className="text-slate-500 text-sm">Pontos</span>
-                <span className="font-bold text-slate-800">{formatBR(top3[2].pontos)}</span>
-              </div>
-              <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                <span className="text-slate-500 text-sm">Livros</span>
-                <span className="font-bold text-slate-800">{top3[2].livros}</span>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      {/* GRÁFICOS */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-        {/* Gráfico 1: Pontuação vs Empréstimos */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-          <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-            <TrendingUp size={20} className="text-blue-500"/> Pontos e Empréstimos por Unidade
-          </h3>
-          <div className="h-80 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={activeSchools.slice(0, 8)} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} angle={-45} textAnchor="end" height={80} />
-                <YAxis yAxisId="left" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
-                <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                  formatter={(value, name) => [name === 'pontos' ? formatBR(value) : value, name === 'pontos' ? 'Pontuação' : 'Livros']}
-                />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }} />
-                <Bar yAxisId="right" dataKey="livros" name="Livros Emprestados" fill="#e2e8f0" radius={[4, 4, 0, 0]} barSize={30} />
-                <Line yAxisId="left" type="monotone" dataKey="pontos" name="Pontuação Final" stroke="#0ea5e9" strokeWidth={3} dot={{ r: 6, fill: '#0ea5e9', stroke: '#fff', strokeWidth: 2 }} />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Gráfico 2: Eficiência (Pontos por 100 alunos) */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-          <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-            <Award size={20} className="text-emerald-500"/> Eficiência: Pontos / 100 Estudantes
-          </h3>
-          <div className="h-80 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={activeSchools.slice(0, 6)} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
-                <XAxis type="number" hide />
-                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 500 }} width={100} />
-                <Tooltip 
-                  cursor={{ fill: '#f8fafc' }}
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  formatter={(value) => [formatBR(value), 'Pts/100 Alunos']}
-                />
-                <Bar dataKey="p100" radius={[0, 4, 4, 0]} barSize={24}>
-                  {activeSchools.slice(0, 6).map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={index === 0 ? '#10b981' : index === 1 ? '#0ea5e9' : '#94a3b8'} />
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[700px]">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200">
+                    <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider">Rank</th>
+                    <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider">Escola</th>
+                    <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Estudantes</th>
+                    <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Livros</th>
+                    <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Pontuação</th>
+                    <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Pts/100 Alunos</th>
+                    <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Nível Atual</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {rawData.map((school, idx) => (
+                    <tr key={idx} className={`hover:bg-slate-50 transition-colors ${!school.ativo ? 'opacity-50 grayscale' : ''}`}>
+                      <td className="py-3 px-6 whitespace-nowrap">
+                        <span className={`font-bold w-8 h-8 flex items-center justify-center rounded-full text-sm
+                          ${school.rank === 1 ? 'bg-amber-100 text-amber-700' : 
+                            school.rank === 2 ? 'bg-slate-200 text-slate-700' : 
+                            school.rank === 3 ? 'bg-amber-700/10 text-amber-800' : 
+                            school.ativo ? 'text-slate-500' : 'text-slate-300'}`}>
+                          {school.rank}
+                        </span>
+                      </td>
+                      <td className="py-3 px-6 whitespace-nowrap font-medium text-slate-900">
+                        {school.name}
+                      </td>
+                      <td className="py-3 px-6 whitespace-nowrap text-right text-slate-600">
+                        {school.estudantes}
+                      </td>
+                      <td className="py-3 px-6 whitespace-nowrap text-right font-medium text-slate-700">
+                        {school.livros > 0 ? school.livros : '-'}
+                      </td>
+                      <td className="py-3 px-6 whitespace-nowrap text-right font-bold text-slate-900">
+                        {school.ativo ? formatPontos(school.pontos) : '-'}
+                      </td>
+                      <td className="py-3 px-6 whitespace-nowrap text-right text-slate-600">
+                        {school.ativo ? formatP100(school.p100) : '-'}
+                      </td>
+                      <td className="py-3 px-6 whitespace-nowrap text-center">
+                        <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${getNivelColor(school.nivel)}`}>
+                          {school.nivel}
+                        </span>
+                      </td>
+                    </tr>
                   ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* TABELA DE DADOS DETALHADA */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-          <h3 className="text-lg font-bold text-slate-800">Ranking Completo e Detalhamento</h3>
-          <span className="text-sm font-medium text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-200 shadow-sm">
-            {rawData.length} Unidades Cadastradas
-          </span>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider">Rank</th>
-                <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider">Escola</th>
-                <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Estudantes</th>
-                <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Livros</th>
-                <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Pontuação</th>
-                <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Nível Atual</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {rawData.map((school, idx) => (
-                <tr key={idx} className={`hover:bg-slate-50 transition-colors ${!school.ativo ? 'opacity-50 grayscale' : ''}`}>
-                  <td className="py-3 px-6 whitespace-nowrap">
-                    <span className={`font-bold w-8 h-8 flex items-center justify-center rounded-full text-sm
-                      ${school.rank === 1 ? 'bg-amber-100 text-amber-700' : 
-                        school.rank === 2 ? 'bg-slate-200 text-slate-700' : 
-                        school.rank === 3 ? 'bg-amber-700/10 text-amber-800' : 
-                        school.ativo ? 'text-slate-500' : 'text-slate-300'}`}>
-                      {school.rank}
-                    </span>
-                  </td>
-                  <td className="py-3 px-6 whitespace-nowrap font-medium text-slate-900">
-                    {school.name}
-                  </td>
-                  <td className="py-3 px-6 whitespace-nowrap text-right text-slate-600">
-                    {school.estudantes}
-                  </td>
-                  <td className="py-3 px-6 whitespace-nowrap text-right font-medium text-slate-700">
-                    {school.livros > 0 ? school.livros : '-'}
-                  </td>
-                  <td className="py-3 px-6 whitespace-nowrap text-right font-bold text-slate-900">
-                    {school.ativo ? formatBR(school.pontos) : '-'}
-                  </td>
-                  <td className="py-3 px-6 whitespace-nowrap text-center">
-                    <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${getNivelColor(school.nivel)}`}>
-                      {school.nivel}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      );
+    }
 
-    </div>
-  );
-}
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<DashboardSESI />);
+  </script>
+</body>
+</html>
